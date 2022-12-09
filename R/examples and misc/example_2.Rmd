@@ -1,0 +1,45 @@
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+set.seed(36) #used echo=FALSE to stop our packages from being printed again. But they are necessary for knitting out an HTML page. 
+library(dbscan) #used for dbscan functions
+library(tidyverse) #used for the pipe (%>%) 
+library(factoextra) #used for creating visualizations using dbscan output
+library(OpenML) #used for obtaining the data sets used in the examples. 
+```
+
+Organize data from the factoextra package,
+```{r message=FALSE}
+data("multishapes")
+multishapesData <- multishapes[ ,1:2]  #x,y coordinates with no labels
+plot(x=multishapesData[, 1], y=multishapesData[, 2])
+```
+
+Perform clustering,
+```{r message=FALSE}
+#Increase the number of clusters by increasing the minPts needed for a point to be a core point.
+#Decrease the outliers captured by clusters by decreasing the eps. 
+msDbscanResult <- dbscan::dbscan(x=multishapesData, eps=0.15, minPts = 3)
+
+#Basically trial and error until I get parameters that yield a number of clusters + noise that make sense. 
+msDbscanResult
+```
+Graph results,
+```{r message=FALSE}
+fviz_cluster(object = msDbscanResult, stand=FALSE, data = multishapesData, choose.vars=c("x", "y"), geom = c("point"), ggtheme=theme_bw(), ellipse=FALSE, show.clust.cent = FALSE, pointsize = 1.5, outlier.pointsize = 0.5)
+```
+
+Let's compare it to K-means. We know that there are 5 clusters, so let's use that. But also, let's what we can find to be the optimal number of clusters for k-means. 
+
+```{r}
+library(cluster)
+```
+```{r}
+fviz_nbclust(x=multishapesData, FUNcluster = kmeans, method="wss") 
+```
+```{r}
+#It looks like the elbow stabilizes at around 4, so we'll use k=4
+kMeans <- kmeans(x=multishapesData, centers=5, nstart = 25)
+fviz_cluster(object=kMeans, data=multishapesData, geom="point")
+```
+
+
+

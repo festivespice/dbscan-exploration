@@ -1,0 +1,35 @@
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+set.seed(36) #used echo=FALSE to stop our packages from being printed again. But they are necessary for knitting out an HTML page. 
+library(dbscan) #used for dbscan functions
+library(tidyverse) #used for the pipe (%>%) 
+library(factoextra) #used for creating visualizations using dbscan output
+library(OpenML) #used for obtaining the data sets used in the examples. 
+
+#include loading the data in this chunk so that it's not seen.
+eucalyptusDf <- (getOMLDataSet(data.id=188)$data)
+
+eucalyptusMatrix <- eucalyptusDf[, c(-1, -2, -3, -4, -5, -6, -10, -20)] %>% #remove label column and everything else I don't want
+  na.omit() %>%
+  scale() %>%
+  as.matrix()
+eucalyptusMatrixA <- eucalyptusMatrix[, c(4, 6)] #lot number and height
+```
+
+Use the tool that the dbscan package kindly provides for us to find the optimal eps value when given minPts,
+```{r}
+dbscan::kNNdistplot(x=eucalyptusMatrixA, minPts=5)
+abline(h=.25, lty=2)
+```
+
+Get clustering results,
+```{r}
+#The optimal value for eps seems  to be around .25, so let's use that. 
+eucalyptusDbscanResult2 <- dbscan::dbscan(x=eucalyptusMatrixA, eps=.25, minPts = 5)
+eucalyptusDbscanResult2
+```
+
+Display the optimized clustering results,
+```{r}
+#Optimally separated data with minPts = 5.
+fviz_cluster(object=eucalyptusDbscanResult2, stand=FALSE, data=eucalyptusMatrix, choose.vars=c("PMCno", "Ht"), geom=c("point"), ggtheme=theme_bw(), ellipse=TRUE, show.clust.cent = FALSE, pointsize=1.5, outlier.pointsize = 0.5)
+```

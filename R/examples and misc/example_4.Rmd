@@ -1,0 +1,53 @@
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+set.seed(36) #used echo=FALSE to stop our packages from being printed again. But they are necessary for knitting out an HTML page. 
+library(dbscan) #used for dbscan functions
+library(tidyverse) #used for the pipe (%>%) 
+library(factoextra) #used for creating visualizations using dbscan output
+library(OpenML) #used for obtaining the data sets used in the examples. 
+```
+
+Organizing the data from an OpenML dataset, and formatting it for use,
+```{r message=FALSE}
+seedsDfF <- (getOMLDataSet(data.id=1499))$data 
+seedsDf <- seedsDfF[, -8] %>% #remove the label column
+  mutate_all(as.numeric) %>%
+  na.omit %>%
+  scale()
+
+seedsMatrix <- as.matrix(seedsDf) 
+```
+
+Graph the first pair and visualize its clustering output,
+```{r message=FALSE}
+#let's try plotting the area vs. the length of its groove
+ggplot(seedsDfF, aes(x=V4, y=V1, color=Class)) + 
+  geom_point(aes(color=Class)) + 
+  theme(legend.justification = c(1, 0), legend.position = c(1, 0))
+seedsMatrixB <- seedsMatrix[, c(4, 1)]
+```
+
+```{r message=FALSE}
+seedsDbscanResultB <- dbscan::dbscan(x=seedsMatrixB, eps = .15, minPts=4)
+seedsDbscanResultB
+```
+```{r message=FALSE}
+fviz_cluster(object=seedsDbscanResultB, stand=FALSE, data=seedsMatrixB, choose.vars=c("V4", "V1"), geom=c("point"), ggtheme=theme_bw(), ellipse=TRUE, show.clust.cent = FALSE, pointsize=1.5, outlier.pointsize = 0.5)
+```
+
+Graph the second pair and visualize its clustering output,
+```{r message=FALSE}
+#let's try plotting the length of the kernel vs. the length of its groove
+ggplot(seedsDfF, aes(x=V4, y=V7, color=Class)) + 
+  geom_point(aes(color=Class)) + 
+  theme(legend.justification = c(1, 0), legend.position = c(1, 0))
+seedsMatrixC <- seedsMatrix[, c(4, 7)]
+```
+
+```{r message=FALSE}
+seedsDbscanResultC <- dbscan::dbscan(x=seedsMatrixC, eps = .25, minPts=7)
+seedsDbscanResultC
+```
+
+```{r message=FALSE}
+fviz_cluster(object=seedsDbscanResultC, stand=FALSE, data=seedsMatrixC, choose.vars=c("V4", "V7"), geom=c("point"), ggtheme=theme_bw(), ellipse=TRUE, show.clust.cent = FALSE, pointsize=1.5, outlier.pointsize = 0.5)
+```

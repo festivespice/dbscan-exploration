@@ -1,0 +1,41 @@
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+set.seed(36) #used echo=FALSE to stop our packages from being printed again. But they are necessary for knitting out an HTML page. 
+library(dbscan) #used for dbscan functions
+library(tidyverse) #used for the pipe (%>%) 
+library(factoextra) #used for creating visualizations using dbscan output
+library(OpenML) #used for obtaining the data sets used in the examples. 
+```
+
+Organizing the data from an OpenML dataset, and formatting it for use,
+```{r message=FALSE}
+eucalyptusDf <- (getOMLDataSet(data.id=188)$data)
+
+eucalyptusMatrix <- eucalyptusDf[, c(-1, -2, -3, -4, -5, -6, -10, -20)] %>% #remove label column and everything else I don't want
+  na.omit() %>%
+  scale() %>%
+  as.matrix()
+```
+
+Graph the data,
+```{r message=FALSE}
+colnames(eucalyptusMatrix)
+
+#How does the lot number of the eucalyptus plant affect height? 
+
+ggplot(eucalyptusDf, aes(x=PMCno, y=Ht, color=Utility)) + 
+  geom_point(aes(color=Utility)) + 
+  theme(legend.justification = c(0, 0), legend.position = c(0, 0))
+```
+
+Get a subset of the data and then perform clustering,
+```{r message=FALSE}
+eucalyptusMatrixA <- eucalyptusMatrix[, c(4, 6)] #lot number and height
+
+
+eucalyptusDbscanResult <- dbscan::dbscan(x=eucalyptusMatrixA, eps=.32, minPts = 8)
+eucalyptusDbscanResult
+```
+Visualize output,
+```{r message=FALSE}
+fviz_cluster(object=eucalyptusDbscanResult, stand=FALSE, data=eucalyptusMatrix, choose.vars=c("PMCno", "Ht"), geom=c("point"), ggtheme=theme_bw(), ellipse=TRUE, show.clust.cent = FALSE, pointsize=1.5, outlier.pointsize = 0.5)
+```

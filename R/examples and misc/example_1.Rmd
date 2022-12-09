@@ -1,0 +1,41 @@
+
+
+Import the packages for these examples,
+```{r message=FALSE, warning=FALSE}
+set.seed(36)
+library(dbscan) #used for dbscan functions
+library(tidyverse) #used for the pipe (%>%) 
+library(factoextra) #used for creating visualizations using dbscan output
+library(OpenML) #used for obtaining the data sets used in the examples. 
+```
+Organize the data,
+```{r message=FALSE}
+data("USArrests") #Built-in R data set
+arrestData <- as.matrix(USArrests[, 1:4])
+#Murder: murder arrests per 100k
+#Assault: assault arrests per 100k
+#UrbanPop: percent urban population
+#Rape: rape arrests per 100k. 
+```
+```{r}
+inputData <- arrestData %>%
+  na.omit() %>%
+  scale()
+
+inputDataA <- inputData[, c(2, 3)] #get the two columns of interest: assault and urbanpop
+```
+Perform clustering,
+```{r message=FALSE}
+USArrClust <- dbscan::dbscan(inputDataA, eps = .55, minPts = 4)
+USArrClust #show DBSCAN output
+USArrClust$cluster #show which group each point, or row in our observations, belongs to
+```
+Graph results,
+```{r message=FALSE}
+#Used to graph the DBSCAN output with its clusters
+fviz_cluster(object = USArrClust, data = inputData,  choose.vars=c("UrbanPop", "Assault"), geom = c("point", "text"), ggtheme=theme_bw(), show.clust.cent = FALSE, pointsize = 1.5, outlier.pointsize = 0.5, labelsize=12, outlier.labelsize = 7, repel = TRUE)
+
+#The black points are outliers (http://www.sthda.com/english/wiki/wiki.php?id_contents=7940) 
+```
+
+

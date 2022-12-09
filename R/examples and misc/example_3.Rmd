@@ -1,0 +1,47 @@
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+set.seed(36) #used echo=FALSE to stop our packages from being printed again. But they are necessary for knitting out an HTML page. 
+library(dbscan) #used for dbscan functions
+library(tidyverse) #used for the pipe (%>%) 
+library(factoextra) #used for creating visualizations using dbscan output
+library(OpenML) #used for obtaining the data sets used in the examples. 
+```
+
+Organizing the data from an OpenML dataset, and formatting it for use,
+```{r message=FALSE,}
+bananaDf <- (getOMLDataSet(data.id = 1460))$data %>%
+  mutate_all(as.numeric)
+
+bananaMatrix <- as.matrix(bananaDf)
+```
+
+```{r message=FALSE,}
+plot(x=bananaMatrix[,1], y=bananaMatrix[,2])
+ggplot(bananaDf, aes(x=V1, y=V2, color=Class)) + 
+  geom_point(aes(color=Class)) +
+  theme(legend.justification = c(1,0), legend.position = c(1,0))
+```
+
+```{r message=FALSE,}
+#the data is already scaled so we just have to remove the label vector and use it. 
+bananaMatrix <- bananaMatrix[, -3]
+```
+Perform clustering,
+```{r message=FALSE,}
+bananaDbscanResult <- dbscan::dbscan(x=bananaMatrix, eps=0.5, minPts = 50)
+bananaDbscanResult
+```
+Graph results, ... what!
+```{r message=FALSE,}
+fviz_cluster(object = bananaDbscanResult, stand=FALSE, data = bananaMatrix, geom = c("point"), ggtheme=theme_bw(), ellipse=FALSE, show.clust.cent = FALSE, pointsize = 1.5, outlier.pointsize = 0.5)
+```
+
+Back to the drawing board, 
+```{r message=FALSE,}
+#It may be that our eps is too big or that our minPts is too low. We notice that the spaces around the banana (the points labeled as '2') have high densities. Maybe we can massively increase our minPts to identify those instead of the banana and basically call try to capture as much of the banana as we can as outliers. 
+bananaDbscanResult <-dbscan::dbscan(x=bananaMatrix, eps=.22, minPts=85)
+bananaDbscanResult
+```
+Graphing again,
+```{r message=FALSE,}
+fviz_cluster(object = bananaDbscanResult, stand=FALSE, data = bananaMatrix, geom = c("point"), ggtheme=theme_bw(), ellipse=FALSE, show.clust.cent = FALSE, pointsize = 1.5, outlier.pointsize = 0.5)
+```
